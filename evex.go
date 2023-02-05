@@ -1,89 +1,124 @@
 package main
 
+/*
+	Evalute Expression
+	Version: 0.9
+*/
+
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"strconv"
 	"strings"
 )
 
-type form struct {
-	val string
-	set []float64
-}
-
-const (
-	tokenNewline = "\n"
-	tokenEval    = ":="
-	lineMinSize  = 3  // Minimal line size
-	exitDef      = 0  // Exit without errors
-	exitErr      = 1  // Exit with error
-	indexVal     = 0  // Index position of value
-	indexSet     = 2  // Index position of set
-	bitsize      = 64 // 64-bit floating point
-	f64Default   = 00.00
-)
-
 var evexMap map[string]float64
 
-// Parse file contents
+func fnFold(set []float64) float64 {
+	var total float64 = 00.00
+	for _, num := range set {
+		total += num
+	}
+	return total
+}
+
+func fnCount(set []float64) float64 {
+	return float64(len(set))
+}
+
+// Evaluate highest
+func fnHigh(set []float64) float64 {
+	max := set[0]
+	for _, num := range set {
+		if num > max {
+			max = num
+		}
+	}
+	return max
+}
+
+// Evaluate lowest
+func fnLow(set []float64) float64 {
+	min := set[0]
+	for _, num := range set {
+		if num < min {
+			min = num
+		}
+	}
+	return min
+}
+
+// Parse and evaluate expression
 func parse(file string) error {
 	file = strings.TrimSuffix(file, tokenNewline)
-	lines := strings.Split(file, tokenNewline)
-
-	// For each line, split the line into tokens,
-	// convert the tail-end tokens to float64,
-	// or error out.
-	for index, line := range lines {
-		tokens := strings.Fields(line)
-		if len(tokens) < lineMinSize {
-			return fmt.Errorf("main.parse: error at index %d", index)
+	for index, line := range strings.Split(file, tokenNewline) {
+		if strings.HasPrefix(line, tokenHash) {
+			continue
 		}
-		if nset, err := substitute(tokens[indexSet:]); err != nil {
+		tokens := strings.Fields(line)
+		if len(tokens) < sizeMinTokens {
+			return fmt.Errorf(errMinTokens, index)
+		}
+		if fn, err := evalFunction(tokens[indcOperation]); err != nil {
+			return err
+		} else if set, err := evalSet(tokens[indcSet:]); err != nil {
 			return err
 		} else {
-			compute(form{val: tokens[indexVal], set: nset})
+			evalForm(evexForm{
+				value:    tokens[indcValue],
+				function: fn,
+				set:      set,
+			})
 		}
 	}
 	return nil
 }
 
-// Substitute strings for float64
-func substitute(set []string) ([]float64, error) {
-	var nset = make([]float64, len(set))
+// Evaluate and apply form
+func evalForm(form evexForm) {
+	evexMap[form.value] = form.function(form.set)
+}
 
-	// For each token, attempt to convert to float64,
-	// or substitute them with known values,
-	// or error out.
-	for index, item := range set {
-		if f, err := strconv.ParseFloat(item, bitsize); err != nil {
-			if fm, ok := evexMap[item]; !ok {
-				return nil, err
+// Map and evaluate strings to a set
+func evalSet(setStr []string) ([]float64, error) {
+	var set []float64
+	for _, str := range setStr {
+		if num, err := strconv.ParseFloat(str, sizeFloat64); err != nil {
+			if num, ok := evexMap[str]; !ok {
+				return set, err
 			} else {
-				nset[index] = fm
+				set = append(set, num)
 				continue
 			}
 		} else {
-			nset[index] = f
+			set = append(set, num)
 			continue
 		}
 	}
-	return nset, nil
+	return set, nil
 }
 
-// Compute and assign expression
-func compute(f form) {
-	var v float64 = f64Default
-	for _, s := range f.set {
-		v += s
+// Map string to function, or error
+func evalFunction(opStr string) (func([]float64) float64, error) {
+	switch opStr {
+	case tokenFold:
+		return fnFold, nil
+	case tokenCount:
+		return fnCount, nil
+	case tokenHigh:
+		return fnHigh, nil
+	case tokenLow:
+		return fnLow, nil
+	default:
+		return nil, fmt.Errorf(errEvalFunction, opStr)
 	}
-	evexMap[f.val] = v
 }
 
 // Output evexMap content
 func output() error {
-	if buf, err := json.Marshal(evexMap); err != nil {
+	if buf, err := json.MarshalIndent(evexMap, tokenEmpty, tokenBigspace); err != nil {
 		return err
 	} else {
 		fmt.Printf("%s\n", string(buf))
@@ -93,21 +128,24 @@ func output() error {
 
 // Program entrypoint
 func main() {
+	var (
+		buf []byte
+		err error
+	)
 	if len(os.Args) < 2 {
-		fmt.Println("usage: evex [file]")
-		os.Exit(exitErr)
-	}
-	if buf, err := os.ReadFile(os.Args[1]); err != nil {
-		fmt.Println(err)
-		os.Exit(exitErr)
+		if buf, err = io.ReadAll(os.Stdin); err != nil {
+			fmt.Println(err)
+			os.Exit(exitErr)
+		}
 	} else {
-		evexMap = make(map[string]float64)
-		if err := parse(string(buf)); err != nil {
+		if buf, err = os.ReadFile(os.Args[1]); err != nil {
 			fmt.Println(err)
 			os.Exit(exitErr)
 		}
 	}
-	if err := output(); err != nil {
+	evexMap = make(map[string]float64)
+	parse(string(buf))
+	if err = output(); err != nil {
 		fmt.Println(err)
 		os.Exit(exitErr)
 	}
