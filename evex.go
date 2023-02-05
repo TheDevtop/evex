@@ -2,7 +2,7 @@ package main
 
 /*
 	Evalute Expression
-	Version: 0.9
+	Version: 1.0
 */
 
 import (
@@ -61,13 +61,13 @@ func parse(file string) error {
 		if len(tokens) < sizeMinTokens {
 			return fmt.Errorf(errMinTokens, index)
 		}
-		if fn, err := evalFunction(tokens[indcOperation]); err != nil {
+		if fn, err := evalFunction(tokens[indcFunc]); err != nil {
 			return err
 		} else if set, err := evalSet(tokens[indcSet:]); err != nil {
 			return err
 		} else {
 			evalForm(evexForm{
-				value:    tokens[indcValue],
+				value:    tokens[indcVal],
 				function: fn,
 				set:      set,
 			})
@@ -101,8 +101,8 @@ func evalSet(setStr []string) ([]float64, error) {
 }
 
 // Map string to function, or error
-func evalFunction(opStr string) (func([]float64) float64, error) {
-	switch opStr {
+func evalFunction(fnStr string) (func([]float64) float64, error) {
+	switch fnStr {
 	case tokenFold:
 		return fnFold, nil
 	case tokenCount:
@@ -112,7 +112,7 @@ func evalFunction(opStr string) (func([]float64) float64, error) {
 	case tokenLow:
 		return fnLow, nil
 	default:
-		return nil, fmt.Errorf(errEvalFunction, opStr)
+		return nil, fmt.Errorf(errEvalFunction, fnStr)
 	}
 }
 
@@ -144,7 +144,10 @@ func main() {
 		}
 	}
 	evexMap = make(map[string]float64)
-	parse(string(buf))
+	if err = parse(string(buf)); err != nil {
+		fmt.Println(err)
+		os.Exit(exitErr)
+	}
 	if err = output(); err != nil {
 		fmt.Println(err)
 		os.Exit(exitErr)

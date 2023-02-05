@@ -28,8 +28,8 @@ const (
 const (
 	sizeMinTokens = 3  // Minimal token size
 	sizeFloat64   = 64 // 64-bit floating point
-	indcValue     = 0
-	indcOperation = 1
+	indcVal       = 0
+	indcFunc      = 1
 	indcSet       = 2
 )
 
