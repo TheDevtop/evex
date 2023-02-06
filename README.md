@@ -1,8 +1,7 @@
 # Evaluate expression
 
-Evex is an evaluation engine which interpets syntax,
+Evex is an evaluation engine (interpreter),
 and behaves similair to lambda calculus.
-Every evaluation is solely based on addition.
 
 ### Usage:
 
@@ -18,4 +17,11 @@ fa := 3.0
 fx := fa fa fa
 ```
 In this example _fa_ is evaluated as 3.0.
-By applying this to _fx_ we get _fx = (3.0+3.0+3.0) = 9_.
+By applying this to _fx_ we get _fx_ = (3.0+3.0+3.0) = 9.
+
+### Operators:
+
+- Reduction **:=**
+- Count/Length **#=**
+- Selection (highest) **|=**
+- Selection (lowest) **&=**

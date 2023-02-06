@@ -1,11 +1,5 @@
 package main
 
-type evexForm struct {
-	value    string
-	function func([]float64) float64
-	set      []float64
-}
-
 // Exit codes
 const (
 	exitDef = 0 // Exit without errors
@@ -18,7 +12,7 @@ const (
 	tokenEmpty    = ""
 	tokenBigspace = "    "
 	tokenHash     = "#"
-	tokenFold     = ":="
+	tokenReduce   = ":="
 	tokenCount    = "#="
 	tokenHigh     = "|="
 	tokenLow      = "&="
@@ -27,14 +21,14 @@ const (
 // Sizes and indeces
 const (
 	sizeMinTokens = 3  // Minimal token size
-	sizeFloat64   = 64 // 64-bit floating point
-	indcVal       = 0
-	indcFunc      = 1
-	indcSet       = 2
+	sizeFloat     = 64 // 64-bit floating point
+	indcVal       = 0  // Index of value token
+	indcFunc      = 1  // Index of function token
+	indcSet       = 2  // Index of set token
 )
 
 // Error strings
 const (
-	errMinTokens    = "token size error at index %d"
-	errEvalFunction = "can't evaluate token (%s)"
+	errMinTokens    = "length error, index %d"
+	errEvalFunction = "token error, can't evaluate (%s)"
 )
