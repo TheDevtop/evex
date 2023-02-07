@@ -2,7 +2,7 @@ package main
 
 /*
 	Evalute Expression
-	Version: 1.1
+	Version: 1.2
 */
 
 import (
@@ -26,7 +26,8 @@ func output() error {
 	return nil
 }
 
-// Map and evaluate strings to a set
+// Convert strings to float64,
+// or get them from evexMap.
 func evalSet(setStr []string) ([]float64, error) {
 	var set []float64
 	for _, str := range setStr {
@@ -45,53 +46,41 @@ func evalSet(setStr []string) ([]float64, error) {
 	return set, nil
 }
 
-// Reduction
-func fnReduce(set []float64) float64 {
-	var total float64 = 00.00
-	for _, num := range set {
-		total += num
-	}
-	return total
-}
-
-// Evaluate length
-func fnCount(set []float64) float64 {
-	return float64(len(set))
-}
-
-// Evaluate highest
-func fnHigh(set []float64) float64 {
-	max := set[0]
-	for _, num := range set {
-		if num > max {
-			max = num
-		}
-	}
-	return max
-}
-
-// Evaluate lowest
-func fnLow(set []float64) float64 {
-	min := set[0]
-	for _, num := range set {
-		if num < min {
-			min = num
-		}
-	}
-	return min
-}
-
-// Map string to function, or error
+// Match string with function
 func evalFunc(fnStr string) (func([]float64) float64, error) {
 	switch fnStr {
 	case tokenReduce:
-		return fnReduce, nil
+		return func(set []float64) float64 {
+			var total float64 = 00.00
+			for _, num := range set {
+				total += num
+			}
+			return total
+		}, nil
 	case tokenCount:
-		return fnCount, nil
+		return func(set []float64) float64 {
+			return float64(len(set))
+		}, nil
 	case tokenHigh:
-		return fnHigh, nil
+		return func(set []float64) float64 {
+			max := set[0]
+			for _, num := range set {
+				if num > max {
+					max = num
+				}
+			}
+			return max
+		}, nil
 	case tokenLow:
-		return fnLow, nil
+		return func(set []float64) float64 {
+			min := set[0]
+			for _, num := range set {
+				if num < min {
+					min = num
+				}
+			}
+			return min
+		}, nil
 	default:
 		return nil, fmt.Errorf(errEvalFunction, fnStr)
 	}
@@ -119,7 +108,7 @@ func parse(file string) error {
 	return nil
 }
 
-// Detect arguments and read from input
+// Read either argument or stdin
 func input() ([]byte, error) {
 	if len(os.Args) < 2 {
 		if buf, err := io.ReadAll(os.Stdin); err != nil {
@@ -128,11 +117,7 @@ func input() ([]byte, error) {
 			return buf, nil
 		}
 	} else {
-		if buf, err := os.ReadFile(os.Args[1]); err != nil {
-			return nil, err
-		} else {
-			return buf, err
-		}
+		return []byte(os.Args[1]), nil
 	}
 }
 

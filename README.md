@@ -1,14 +1,14 @@
 # Evaluate expression
 
 Evex is an evaluation engine (interpreter),
-and behaves similair to lambda calculus.
+and behaves similair to functional languages.
 
 ### Usage:
 
 1. Clone this repository with: `$ git clone`
 2. Build the program with: `$ go build`
 3. Write some evex code into a file
-4. Execute the code with: `$ evex [file]`
+4. Execute the code with: `$ evex < file.vx`
 
 ### Syntax:
 
